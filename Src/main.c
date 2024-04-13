@@ -28,6 +28,19 @@
 
 // **** KEY PAD ***
 
+// Pin numbers of input/output register setting
+#define ROW_1 0x2 // PE2
+#define ROW_2 0x3 // PE3
+#define ROW_3 0x4 // PE4
+#define ROW_4 0x5 // PE5
+
+#define COL_1 0xD // PC13
+#define COL_2 0xC // PC12
+#define COL_3 0xB // PC11
+#define COL_4 0x8 // PC8
+
+
+
 
 // MODE register for Port C (Cols) and Port E (Rows)
 #define modeRegPortC  *((volatile uint32_t*) 0x40020800)
@@ -53,6 +66,15 @@
 
 // *** LCD SCREEN ***
 
+
+// Pin numbers of output register setting
+#define PIN_D7 0x7 // PD7
+#define PIN_D6 0x5 // PD5
+#define PIN_D5 0x4 // PD4
+#define PIN_D4 0x2 // PD2
+#define PIN_RS 0x2 // PG2
+#define PIN_E  0x3 // PG3
+
 // MODE register for PORT G and PORT D
 
 #define modeRegPortG  *((volatile uint32_t*) 0x40021800)
@@ -64,12 +86,6 @@
 #define outputRegPortG *((volatile uint32_t*) 0x40021814)
 #define outputRegPortD  *((volatile uint32_t*) 0x40020C14) // This is used to send character data
 
-#define PIN_D7 0x7
-#define PIN_D6 0x5
-#define PIN_D5 0x4
-#define PIN_D4 0x2
-
-
 
 
 void delay(uint32_t amount)
@@ -79,10 +95,10 @@ void delay(uint32_t amount)
 }
 
 void enableEtoSend(){
-	delay(100);
-	outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command
 	delay(50);
-	outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
+	outputRegPortG = outputRegPortG | (1 << PIN_E); // enabling E (PG3) to send command
+	delay(50);
+	outputRegPortG = outputRegPortG & ~(1 << PIN_E); // disabling E (PG3) to send command
 	delay(50);
 
 }
@@ -94,59 +110,37 @@ void clearDpins(){
 	outputRegPortD = outputRegPortD & ~(1 << PIN_D6);
 	outputRegPortD = outputRegPortD & ~(1 << PIN_D7);
 	delay(100);
-
-
 }
 
 void resetDisplay(){
 
 		//	Sending 0000
 		delay(150);
-		outputRegPortD = outputRegPortD & ~(1 << 4); // clearing D5 (PD4)
-		delay(100);
+		outputRegPortD = outputRegPortD & ~(1 << PIN_D5); // clearing D5
 
-		outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command (0000)
-		delay(50);
-		outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-
-
-
+		enableEtoSend();
 
 		// Sending 0001
 		delay(100);
-		outputRegPortD = outputRegPortD | (1 << 2); // enabling D4(PD2)
-		delay(50);
-		outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command (0001)
-		delay(50);
-		outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
+		outputRegPortD = outputRegPortD | (1 << PIN_D4); // enabling D4
 
-
+		enableEtoSend();
 
 	// Return Home
 
 		//	Sending 0000
 		delay(100);
-		outputRegPortD = outputRegPortD & ~(1 << 2); // disabling D4(PD2)
-		delay(50);
+		outputRegPortD = outputRegPortD & ~(1 << PIN_D4); // disabling D4
 
-		outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command (0000)
-		delay(50);
-		outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-
+		enableEtoSend();
 
 		//	Sending 0010
 		delay(100);
-		outputRegPortD = outputRegPortD | (1 << 4); // enabling D5(PD4)
+		outputRegPortD = outputRegPortD | (1 << PIN_D5); // enabling D5
 
-		delay(50);
+		enableEtoSend();
 
-		outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command (0001)
-		delay(50);
-		outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-		outputRegPortD = outputRegPortD & ~(1 << 4); // disabling D4(PD2)
-
-
-
+		outputRegPortD = outputRegPortD & ~(1 << PIN_D5); // disabling D5
 }
 
 
@@ -154,34 +148,23 @@ void sendLCDData(uint8_t data){
 
 	uint8_t upperNibble = (data & 0xF0) >> 4;
 
-
 	//	Enable RS
-	outputRegPortG = outputRegPortG | (1 << 2); // enabling RS (PG2) to send data
+	outputRegPortG = outputRegPortG | (1 << PIN_RS); // enabling RS (PG2) to send data
 	delay(100);
-
 
 
 //	UPPER 4 bits
 //	1st bit set
-	if(upperNibble & 0x1 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D4);
-
-	}
+	if(upperNibble & 0x1 ){		outputRegPortD = outputRegPortD | (1 << PIN_D4);	}
 //	Second bit set
 
-	if (upperNibble & 0x2 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D5);
-	}
+	if (upperNibble & 0x2 ){	outputRegPortD = outputRegPortD | (1 << PIN_D5);	}
 
 //	third bit set
-	if (upperNibble & 0x4 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D6);
-	}
+	if (upperNibble & 0x4 ){	outputRegPortD = outputRegPortD | (1 << PIN_D6);	}
 
 //	fourth bit set
-	if (upperNibble & 0x8 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D7);
-	}
+	if (upperNibble & 0x8 ){	outputRegPortD = outputRegPortD | (1 << PIN_D7);	}
 
 //	Send first 4 bits
 	enableEtoSend();
@@ -190,34 +173,24 @@ void sendLCDData(uint8_t data){
 
 //	LOWER 4 bits
 //	1st bit set
-	if(data & 0x1 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D4);
+	if(data & 0x1 ) {	outputRegPortD = outputRegPortD | (1 << PIN_D4);	}
 
-	}
 //	Second bit set
-
-	if (data & 0x2 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D5);
-	}
+	if (data & 0x2 ) {	outputRegPortD = outputRegPortD | (1 << PIN_D5);	}
 
 //	third bit set
-	if (data & 0x4 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D6);
-	}
+	if (data & 0x4 ) {	outputRegPortD = outputRegPortD | (1 << PIN_D6);	}
 
 //	fourth bit set
-	if (data & 0x8 ){
-		outputRegPortD = outputRegPortD | (1 << PIN_D7);
-	}
+	if (data & 0x8 ) {	outputRegPortD = outputRegPortD | (1 << PIN_D7);	}
 
-//	Send first 4 bits
+
+//	Send second 4 bits
 	enableEtoSend();
 	clearDpins();
 
-
-
 	delay(100);
-	outputRegPortG = outputRegPortG & ~(1 << 2); // disabling RS (PG2)
+	outputRegPortG = outputRegPortG & ~(1 << PIN_RS); // disabling RS (PG2)
 
 }
 
@@ -262,22 +235,9 @@ int main(void)
 // Change LCD Display into 4-bit mode
 
 	delay(100);
-	outputRegPortD = outputRegPortD | (1 << 4); // enabling D5 (PD4) to send 0100
-	delay(50);
+	outputRegPortD = outputRegPortD | (1 << PIN_D5); // enabling D5 (PD4) to send 0100
 
-
-	outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command
-	delay(50);
-	outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-
-//	//	Sending 0000
-//	delay(100);
-//	outputRegPortD = outputRegPortD & ~(1 << 4); // clearing D5 (PD4)
-//	delay(50);
-//
-//	outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command (0000)
-//	delay(50);
-//	outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
+	enableEtoSend();
 
 
 //	Clear display
@@ -285,31 +245,23 @@ int main(void)
 
 
 // Display On cursor, Blinking
-	//	Sending 0000
-	delay(100);
+	//	Sending 0000 (D5 is reset in resetDisplay() so all pins are set LOW (0)  )
+	enableEtoSend();
 
-	outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command (0000)
-	delay(50);
-	outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-	delay(100);
 
 //			Sending 1111
-	outputRegPortD = outputRegPortD | (1 << 7); // enabling D7 (PD7) to send 1111
-	outputRegPortD = outputRegPortD | (1 << 5); // enabling D6 (PD5) to send 1111
-	outputRegPortD = outputRegPortD | (1 << 4); // enabling D5 (PD4) to send 1111
-//	outputRegPortD = outputRegPortD | (1 << 2); // enabling D4 (PD2) to send 1111
+	outputRegPortD = outputRegPortD | (1 << PIN_D7); // enabling D7 to send 1111
+	outputRegPortD = outputRegPortD | (1 << PIN_D6); // enabling D6 to send 1111
+	outputRegPortD = outputRegPortD | (1 << PIN_D5); // enabling D5 to send 1111
+//	outputRegPortD = outputRegPortD | (1 << PIN_D4); // enabling D4 to send 1111
 
-
-	delay(100);
-	outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command
-	delay(50);
-	outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
+	enableEtoSend();
 
 //	Clearing D pins
-	outputRegPortD = outputRegPortD & ~(1 << 7); // disabling D7 (PD7)
-	outputRegPortD = outputRegPortD & ~(1 << 5); // disabling D6 (PD5)
-	outputRegPortD = outputRegPortD & ~(1 << 4); // disabling D5 (PD4)
-//	outputRegPortD = outputRegPortD & ~(1 << 2); // disabling D4 (PD2)
+	outputRegPortD = outputRegPortD & ~(1 << PIN_D7); // disabling D7
+	outputRegPortD = outputRegPortD & ~(1 << PIN_D6); // disabling D6
+	outputRegPortD = outputRegPortD & ~(1 << PIN_D5); // disabling D5
+//	outputRegPortD = outputRegPortD & ~(1 << PIN_D4); // disabling D4
 
 
 
@@ -320,142 +272,62 @@ int main(void)
 		outputRegPortE = outputRegPortE | 0x3C;
 
 //		Make R1 (PE2) LOW STATE
-		outputRegPortE = outputRegPortE & ~(1 << 2);
+		outputRegPortE = outputRegPortE & ~(1 << ROW_1);
 
 //
-		if((inputRegPortC & (1 << 13)) == 0){
+		if((inputRegPortC & (1 << COL_1)) == 0){
 			delay(300000);
 			sendLCDData(0x31);
-
-//
-////			Enable RS
-//			outputRegPortG = outputRegPortG | (1 << 2); // enabling RS (PG2) to send data
-//			delay(100);
-//
-////			Send 0011
-//
-//			outputRegPortD = outputRegPortD | (1 << 4); // enabling D5 (PD4) to send 0011
-//			outputRegPortD = outputRegPortD | (1 << 2); // enabling D4 (PD2) to send 0011
-//
-//
-//			delay(100);
-//			outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command
-//			delay(50);
-//			outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-//
-//			outputRegPortD = outputRegPortD & ~(1 << 4); // disabling D5 (PD4)
-//			outputRegPortD = outputRegPortD & ~(1 << 2); // disabling D4 (PD2)
-//
-////			Send 0001
-//			delay(100);
-//
-//			outputRegPortD = outputRegPortD | (1 << 2); // enabling D4 (PD2) to send 0001
-//			delay(100);
-//			outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command
-//			delay(50);
-//			outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-//
-//			outputRegPortD = outputRegPortD & ~(1 << 2); // disabling D4 (PD2)
-//
-//
-//			delay(100);
-//			outputRegPortG = outputRegPortG & ~(1 << 2); // disabling RS (PG2)
-
-
-
 			printf("1\n");
 
-		} else if((inputRegPortC & (1 << 12)) == 0)
+		} else if((inputRegPortC & (1 << COL_2)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x32);
-
 			printf("2\n");
 
-		} else if((inputRegPortC & (1 << 11)) == 0)
+		} else if((inputRegPortC & (1 << COL_3)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x33);
-
-
 			printf("3\n");
 
-		}else if((inputRegPortC & (1 << 8)) == 0)
+		}else if((inputRegPortC & (1 << COL_4)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x41);
-
-
-
-////			Enable RS
-//			outputRegPortG = outputRegPortG | (1 << 2); // enabling RS (PG2) to send data
-//			delay(100);
-//
-////			Send 0100
-//
-//			outputRegPortD = outputRegPortD | (1 << 5); // enabling D6 (PD5) to send 0011
-//
-//
-//			delay(100);
-//			outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command
-//			delay(50);
-//			outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-//
-//
-//			outputRegPortD = outputRegPortD & ~(1 << 5); // disabling D6 (PD5)
-//
-////			Send 0001
-//			delay(100);
-//
-//			outputRegPortD = outputRegPortD | (1 << 2); // enabling D4 (PD2) to send 0001
-//			delay(100);
-//			outputRegPortG = outputRegPortG | (1 << 3); // enabling E (PG3) to send command
-//			delay(50);
-//			outputRegPortG = outputRegPortG & ~(1 << 3); // disabling E (PG3) to send command
-//
-//			outputRegPortD = outputRegPortD & ~(1 << 2); // disabling D4 (PD2)
-//
-//
-//			delay(100);
-//			outputRegPortG = outputRegPortG & ~(1 << 2); // disabling RS (PG2)
-
 			printf("A\n");
 		}
-
 
 
 //		Keep ROWS (PORT E) in HIGH mode (PE2,PE3,PE4,PE5)
 		outputRegPortE = outputRegPortE | 0x3C;
 
 //		Make R2 (PE3) LOW STATE
-		outputRegPortE = outputRegPortE & ~(1 << 3);
+		outputRegPortE = outputRegPortE & ~(1 << ROW_2);
 
 //
-		if((inputRegPortC & (1 << 13)) == 0){
+		if((inputRegPortC & (1 << COL_1)) == 0){
 			delay(300000);
 			sendLCDData(0x34);
-
 			printf("4\n");
 
-		} else if((inputRegPortC & (1 << 12)) == 0)
+		} else if((inputRegPortC & (1 << COL_2)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x35);
-
 			printf("5\n");
 
-		} else if((inputRegPortC & (1 << 11)) == 0)
+		} else if((inputRegPortC & (1 << COL_3)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x36);
-
 			printf("6\n");
 
-		}else if((inputRegPortC & (1 << 8)) == 0)
+		}else if((inputRegPortC & (1 << COL_4)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x42);
-
 			printf("B\n");
 		}
 
@@ -465,34 +337,30 @@ int main(void)
 		outputRegPortE = outputRegPortE | 0x3C;
 
 //		Make R3 (PE4) LOW STATE
-		outputRegPortE = outputRegPortE & ~(1 << 4);
+		outputRegPortE = outputRegPortE & ~(1 << ROW_3);
 
 //
-		if((inputRegPortC & (1 << 13)) == 0){
+		if((inputRegPortC & (1 << COL_1)) == 0){
 			delay(300000);
 			sendLCDData(0x37);
-
 			printf("7\n");
 
-		} else if((inputRegPortC & (1 << 12)) == 0)
+		} else if((inputRegPortC & (1 << COL_2)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x38);
-
 			printf("8\n");
 
-		} else if((inputRegPortC & (1 << 11)) == 0)
+		} else if((inputRegPortC & (1 << COL_3)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x39);
-
 			printf("9\n");
 
-		}else if((inputRegPortC & (1 << 8)) == 0)
+		}else if((inputRegPortC & (1 << COL_4)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x43);
-
 			printf("C\n");
 		}
 
@@ -501,38 +369,32 @@ int main(void)
 		outputRegPortE = outputRegPortE | 0x3C;
 
 //		Make R4 (PE5) LOW STATE
-		outputRegPortE = outputRegPortE & ~(1 << 5);
+		outputRegPortE = outputRegPortE & ~(1 << ROW_4);
 
 //
-		if((inputRegPortC & (1 << 13)) == 0){
+		if((inputRegPortC & (1 << COL_1)) == 0){
 			delay(300000);
 			resetDisplay();
-
 			printf("*\n");
 
-		} else if((inputRegPortC & (1 << 12)) == 0)
+		} else if((inputRegPortC & (1 << COL_2)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x30);
-
 			printf("0\n");
 
-		} else if((inputRegPortC & (1 << 11)) == 0)
+		} else if((inputRegPortC & (1 << COL_3)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x23);
-
 			printf("#\n");
 
-		}else if((inputRegPortC & (1 << 8)) == 0)
+		}else if((inputRegPortC & (1 << COL_4)) == 0)
 		{
 			delay(300000);
 			sendLCDData(0x44);
-
 			printf("D\n");
 		}
-
-
 
 	};
 
