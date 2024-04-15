@@ -233,27 +233,24 @@ int main(void)
 
 
 // Change LCD Display into 4-bit mode
-
 	delay(100);
 	outputRegPortD = outputRegPortD | (1 << PIN_D5); // enabling D5 (PD4) to send 0100
 
 	enableEtoSend();
 
-
 //	Clear display
 	resetDisplay();
 
 
-// Display On cursor, Blinking
+// Display On cursor on
 	//	Sending 0000 (D5 is reset in resetDisplay() so all pins are set LOW (0)  )
 	enableEtoSend();
 
 
-//			Sending 1111
+//	Sending 1110
 	outputRegPortD = outputRegPortD | (1 << PIN_D7); // enabling D7 to send 1111
 	outputRegPortD = outputRegPortD | (1 << PIN_D6); // enabling D6 to send 1111
 	outputRegPortD = outputRegPortD | (1 << PIN_D5); // enabling D5 to send 1111
-//	outputRegPortD = outputRegPortD | (1 << PIN_D4); // enabling D4 to send 1111
 
 	enableEtoSend();
 
@@ -261,9 +258,6 @@ int main(void)
 	outputRegPortD = outputRegPortD & ~(1 << PIN_D7); // disabling D7
 	outputRegPortD = outputRegPortD & ~(1 << PIN_D6); // disabling D6
 	outputRegPortD = outputRegPortD & ~(1 << PIN_D5); // disabling D5
-//	outputRegPortD = outputRegPortD & ~(1 << PIN_D4); // disabling D4
-
-
 
 
 
